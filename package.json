@@ -1,0 +1,44 @@
+{
+  "name": "postcss-if-media",
+  "version": "1.0.0",
+  "description": "A PostCSS plugin for inline conditional properties based on media queries.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arccoza/postcss-if-media.git"
+  },
+  "keywords": [
+    "postcss",
+    "postcss-if-media",
+    "postcss-plugin",
+    "plugin",
+    "conditional",
+    "if",
+    "inline",
+    "properties",
+    "media",
+    "query",
+    "media",
+    "query",
+    "css"
+  ],
+  "author": "Adrien de Pierres",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/arccoza/postcss-if-media/issues"
+  },
+  "homepage": "https://github.com/arccoza/postcss-if-media#readme",
+  "dependencies": {
+    "postcss": "^5.0.14"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.0",
+    "gulp-postcss": "^6.0.1",
+    "gulp-shell": "^0.5.2",
+    "tap-spec": "^4.1.1",
+    "tape": "^4.4.0"
+  }
+}
