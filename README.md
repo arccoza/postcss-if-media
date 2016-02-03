@@ -1,1 +1,1 @@
-A PostCSS plugin for inline conditional properties based on media queries.
+A PostCSS plugin to inline media queries with CSS properties.

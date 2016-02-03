@@ -10,22 +10,52 @@ module.exports = postcss.plugin('postcss-layout', function (opts) {
         var queries = {};
 
         rule.each(function(node) {
-          if(node.type == 'decl' && (node.value.indexOf('if ') + 1 || node.value.indexOf('? ') + 1)) {
-            processIfValue(css, rule, node, queries);
-            console.log('wha');
+          // Here we check for block inline queries; nested rules in the parent rule with a query for a selector,
+          // which contains a group of properties for that inline query(selector).
+          // We don't process the properties in these query blocks directly, we simply add the query(selector) onto
+          // their value and unwrap them from their container rule block, they will then be processed as regular
+          // properties of the parent rule with inline queries later. 
+          // This process is simpler and easier to maintain.
+          if(node.type == 'rule' && (node.selector.indexOf('?if ') == 0 || node.selector.indexOf('? ') == 0)) {
+            var qblock = node;
+            var prev = qblock;
+
+            node.each(function(node) {
+              if(node.type == 'decl') {
+                node.value += ' ' + qblock.selector;
+                // We keep track of the previous insert/move so that the next insert/move is after the 'prev',
+                // maintaining the original order of the properties and hence CSS specificity.
+                // The first value of 'prev' is obviously the query block.
+                node.moveAfter(prev);
+                prev = node;
+                console.log(node);
+              }
+              else {
+                throw node.error('You can only have properties inside a block inline query. ' + node.selector, { plugin: 'postcss-if-media' });
+              }
+            });
+
+            // Remove the query block when we're done so that it is not processed again later by walkRules.
+            qblock.remove();
+          }
+
+          // Here the properties with an inline query are identified and sent off for processing.
+          if(node.type == 'decl' && (node.value.indexOf('?if ') + 1 || node.value.indexOf('? ') + 1)) {
+            processIfValues(css, rule, node, queries);
           }
         });
 
-        // console.log(Object.keys(queries).length);
         if(Object.keys(queries).length)
           processAtRules(css, rule, queries);
       });
   };
 });
 
-function processIfValue(css, rule, decl, queries) {
+// Extract the values and add them to the list of queries.
+// Props are grouped by their queries, so that they appear in the same @media block later.
+function processIfValues(css, rule, decl, queries) {
   var query = null;
-  var re = /(.*)\s+!?(?:if|\?)\s+media\s+(.*)/;
+  var re = /(.*)\s+(?:\?if|\?)\s+media\s+(.*)/;
   var re2 = /\s/g;
   var hash = null;
 
@@ -43,15 +73,16 @@ function processIfValue(css, rule, decl, queries) {
       }
     }
     queries[hash].props.push({name: decl.prop, value: match[1], query: match[2], hash: hash, decl: decl});
-
-    // return {prop: decl.prop, value: match[1], query: match[2], hash: hash, decl: decl};
   }
   else
     throw decl.error('Invalid inline query. ' + decl.prop + ': ' + decl.value, { plugin: 'postcss-if-media' });
 }
 
+// The previously extracted inline queries and their associated properties are used
+// to create @media rules below(to maintain CSS specificity) the parent rule.
 function processAtRules(css, rule, queries) {
   var parent = rule.parent;
+  var prev = rule;
 
   for(var k in queries) {
     var q = queries[k];
@@ -59,7 +90,10 @@ function processAtRules(css, rule, queries) {
     var qr = postcss.rule ({selector: q.sel, source: rule.source});
     
     at.append(qr);
-    parent.insertAfter(rule, at);
+    // Again we keep track of the previous insert and insert after it, to maintain the original order
+    // and CSS specificity.
+    parent.insertAfter(prev, at);
+    prev = at;
     
     for (var i = 0; i < q.props.length; i++) {
       var prop = q.props[i];
@@ -71,69 +105,4 @@ function processAtRules(css, rule, queries) {
 
 function clone(obj) {
   return JSON.parse(JSON.stringify(obj));
-}
-
-/**
- * JS Implementation of MurmurHash3 (r136) (as of May 20, 2011)
- * 
- * @author <a href="mailto:gary.court@gmail.com">Gary Court</a>
- * @see http://github.com/garycourt/murmurhash-js
- * @author <a href="mailto:aappleby@gmail.com">Austin Appleby</a>
- * @see http://sites.google.com/site/murmurhash/
- * 
- * @param {string} key ASCII only
- * @param {number} seed Positive integer only
- * @return {number} 32-bit positive integer hash 
- */
-
-function murmur3(key, seed) {
-  var remainder, bytes, h1, h1b, c1, c1b, c2, c2b, k1, i;
-  
-  remainder = key.length & 3; // key.length % 4
-  bytes = key.length - remainder;
-  h1 = seed;
-  c1 = 0xcc9e2d51;
-  c2 = 0x1b873593;
-  i = 0;
-  
-  while (i < bytes) {
-      k1 = 
-        ((key.charCodeAt(i) & 0xff)) |
-        ((key.charCodeAt(++i) & 0xff) << 8) |
-        ((key.charCodeAt(++i) & 0xff) << 16) |
-        ((key.charCodeAt(++i) & 0xff) << 24);
-    ++i;
-    
-    k1 = ((((k1 & 0xffff) * c1) + ((((k1 >>> 16) * c1) & 0xffff) << 16))) & 0xffffffff;
-    k1 = (k1 << 15) | (k1 >>> 17);
-    k1 = ((((k1 & 0xffff) * c2) + ((((k1 >>> 16) * c2) & 0xffff) << 16))) & 0xffffffff;
-
-    h1 ^= k1;
-        h1 = (h1 << 13) | (h1 >>> 19);
-    h1b = ((((h1 & 0xffff) * 5) + ((((h1 >>> 16) * 5) & 0xffff) << 16))) & 0xffffffff;
-    h1 = (((h1b & 0xffff) + 0x6b64) + ((((h1b >>> 16) + 0xe654) & 0xffff) << 16));
-  }
-  
-  k1 = 0;
-  
-  switch (remainder) {
-    case 3: k1 ^= (key.charCodeAt(i + 2) & 0xff) << 16;
-    case 2: k1 ^= (key.charCodeAt(i + 1) & 0xff) << 8;
-    case 1: k1 ^= (key.charCodeAt(i) & 0xff);
-    
-    k1 = (((k1 & 0xffff) * c1) + ((((k1 >>> 16) * c1) & 0xffff) << 16)) & 0xffffffff;
-    k1 = (k1 << 15) | (k1 >>> 17);
-    k1 = (((k1 & 0xffff) * c2) + ((((k1 >>> 16) * c2) & 0xffff) << 16)) & 0xffffffff;
-    h1 ^= k1;
-  }
-  
-  h1 ^= key.length;
-
-  h1 ^= h1 >>> 16;
-  h1 = (((h1 & 0xffff) * 0x85ebca6b) + ((((h1 >>> 16) * 0x85ebca6b) & 0xffff) << 16)) & 0xffffffff;
-  h1 ^= h1 >>> 13;
-  h1 = ((((h1 & 0xffff) * 0xc2b2ae35) + ((((h1 >>> 16) * 0xc2b2ae35) & 0xffff) << 16))) & 0xffffffff;
-  h1 ^= h1 >>> 16;
-
-  return h1 >>> 0;
 }
