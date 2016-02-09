@@ -1,7 +1,7 @@
 {
   "name": "postcss-if-media",
   "version": "1.0.0",
-  "description": "A PostCSS plugin to inline media queries with CSS properties.",
+  "description": "A PostCSS plugin to inline or nest media queries with CSS properties.",
   "main": "index.js",
   "scripts": {
     "test": "node ./test/test.js"

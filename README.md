@@ -1,1 +1,1 @@
-A PostCSS plugin to inline media queries with CSS properties.
+A PostCSS plugin to inline or nest media queries with CSS properties.
