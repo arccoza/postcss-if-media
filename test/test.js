@@ -6,11 +6,14 @@ var postcss = require("postcss");
 var plugin = require("..");
 
 
-test.createStream()
-  // .pipe(tapSpec())
-  // .pipe(tapNotify())
-  .pipe(tapDiff())
-  .pipe(process.stdout);
+// if(require.main === module) {
+if(!module.parent) {
+  test.createStream()
+    // .pipe(tapSpec())
+    // .pipe(tapNotify())
+    .pipe(tapDiff())
+    .pipe(process.stdout);
+}
 
 var opts = {};
 var processor = postcss([plugin(opts)]);
