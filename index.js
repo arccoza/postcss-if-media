@@ -3,10 +3,12 @@ var postcss = require('postcss');
 
 module.exports = postcss.plugin('postcss-layout', function (opts) {
   opts = opts || {};
+  opts._queries = [];
   
   return function (css, result) {
     css
       .walkRules(function(rule) {
+        // Used to keep track of all the queries and associated properties for this rule.
         var queries = {};
 
         rule.each(function(node) {
@@ -16,7 +18,7 @@ module.exports = postcss.plugin('postcss-layout', function (opts) {
           // their value and unwrap them from their container rule block, they will then be processed as regular
           // properties of the parent rule with inline queries later. 
           // This process is simpler and easier to maintain.
-          if(node.type == 'rule' && (node.selector.indexOf('?if ') == 0 || node.selector.indexOf('? ') == 0)) {
+          if(node.type == 'rule' && (node.selector.indexOf('?if') == 0 || node.selector.indexOf('?') == 0)) {
             var qblock = node;
             var prev = qblock;
 
@@ -28,7 +30,7 @@ module.exports = postcss.plugin('postcss-layout', function (opts) {
                 // The first value of 'prev' is obviously the query block.
                 node.moveAfter(prev);
                 prev = node;
-                console.log(node);
+                // console.log(node);
               }
               else {
                 throw node.error('You can only have properties inside a block inline query. ' + node.selector, { plugin: 'postcss-if-media' });
@@ -40,13 +42,20 @@ module.exports = postcss.plugin('postcss-layout', function (opts) {
           }
 
           // Here the properties with an inline query are identified and sent off for processing.
-          if(node.type == 'decl' && (node.value.indexOf('?if ') + 1 || node.value.indexOf('? ') + 1)) {
+          if(node.type == 'decl' && (node.value.indexOf('?if') + 1 || node.value.indexOf('?') + 1)) {
             processIfValues(css, rule, node, queries);
+          } else if(node.type == 'decl') {
+            // console.log('no decl match', node.prop, node.value);
           }
         });
 
-        if(Object.keys(queries).length)
-          processAtRules(css, rule, queries);
+        // Take the gathered queries and associated properties and send them to be made into @media rules.
+        if(Object.keys(queries).length) {
+          createAtRules(css, rule, queries);
+
+          // For tests and debugging.
+          opts._queries.concat(queries);
+        }
       });
   };
 });
@@ -80,7 +89,7 @@ function processIfValues(css, rule, decl, queries) {
 
 // The previously extracted inline queries and their associated properties are used
 // to create @media rules below(to maintain CSS specificity) the parent rule.
-function processAtRules(css, rule, queries) {
+function createAtRules(css, rule, queries) {
   var parent = rule.parent;
   var prev = rule;
 

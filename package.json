@@ -4,7 +4,7 @@
   "description": "A PostCSS plugin to inline media queries with CSS properties.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node ./test/test.js"
   },
   "repository": {
     "type": "git",
@@ -38,6 +38,8 @@
     "gulp": "^3.9.0",
     "gulp-postcss": "^6.0.1",
     "gulp-shell": "^0.5.2",
+    "tap-diff": "^0.1.1",
+    "tap-notify": "0.0.3",
     "tap-spec": "^4.1.1",
     "tape": "^4.4.0"
   }
