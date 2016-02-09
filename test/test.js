@@ -63,6 +63,9 @@ var tests = {
       "out": postcss.CssSyntaxError
     }
   ],
+  // color: green; is appended to these test because PostCSS keeps stripping the last ';'
+  // from the result because of the nested block (which doesn't have a closing ';').
+  //  Related: https://github.com/postcss/postcss-nested/issues/9
   "block": [ 
     {
       "msg": "Move a property in a block ?if media query into its own rule under an @media query.",
