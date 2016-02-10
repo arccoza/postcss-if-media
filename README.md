@@ -1,5 +1,5 @@
-[travis]:               https://travis-ci.org/arccoza/postcss-layout
-[travis-img]:           https://img.shields.io/travis/arccoza/postcss-layout.svg
+[travis]:               https://travis-ci.org/arccoza/postcss-if-media
+[travis-img]:           https://img.shields.io/travis/arccoza/postcss-if-media.svg
 [postcss-custom-media]: https://github.com/postcss/postcss-custom-media
 [postcss-media-minmax]: https://github.com/postcss/postcss-media-minmax
 # PostCSS ?If Media [![Travis Build Status][travis-img]][travis]
