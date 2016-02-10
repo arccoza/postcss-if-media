@@ -2,7 +2,7 @@
 [travis-img]:           https://img.shields.io/travis/arccoza/postcss-layout.svg
 [postcss-custom-media]: https://github.com/postcss/postcss-custom-media
 [postcss-media-minmax]: https://github.com/postcss/postcss-media-minmax
-# PostCSS If Media [![Travis Build Status][travis-img]][travis]
+# PostCSS ?If Media [![Travis Build Status][travis-img]][travis]
 
 A PostCSS plugin for adding `?if media` queries inside rules and inline with property values.
 A great way to keep style values for different media queries neatly organized and grouped together under their natural rules.
