@@ -15,6 +15,9 @@ Any properties with the `?if media QUERY` declaration following their value, or 
 
 The generated `@media` queries are placed directly after the original rule to maintain specificity.
 
+## Install
+`npm install postcss-if-media --save`
+
 ## Example 1
 An inline declaration example.
 
