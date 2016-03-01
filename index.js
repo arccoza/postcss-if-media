@@ -23,8 +23,11 @@ module.exports = postcss.plugin('postcss-layout', function (opts) {
             var prev = qblock;
 
             node.each(function(node) {
-              if(node.type == 'decl') {
-                node.value += ' ' + qblock.selector;
+              if(node.type == 'decl' || node.type == 'comment') {
+                if(node.value)
+                  node.value += ' ' + qblock.selector;
+                else
+                  node.text += ' ' + qblock.selector;
                 // We keep track of the previous insert/move so that the next insert/move is after the 'prev',
                 // maintaining the original order of the properties and hence CSS specificity.
                 // The first value of 'prev' is obviously the query block.
@@ -32,8 +35,11 @@ module.exports = postcss.plugin('postcss-layout', function (opts) {
                 prev = node;
                 // console.log(node);
               }
+              // else if(node.type == 'comment') {
+
+              // }
               else {
-                throw node.error('You can only have properties inside a block inline query. ' + node.selector, { plugin: 'postcss-if-media' });
+                throw node.error('You can only have properties/comments inside a block inline query. ' + node.parent.parent.selector, { plugin: 'postcss-if-media' });
               }
             });
 
@@ -44,8 +50,13 @@ module.exports = postcss.plugin('postcss-layout', function (opts) {
           // Here the properties with an inline query are identified and sent off for processing.
           if(node.type == 'decl' && (node.value.indexOf('?if') + 1 || node.value.indexOf('?') + 1)) {
             processIfValues(css, rule, node, queries);
-          } else if(node.type == 'decl') {
+          } 
+          else if(node.type == 'decl') {
             // console.log('no decl match', node.prop, node.value);
+          }
+          // We process and move comments only because some plugins rely on them.
+          else if(node.type == 'comment' && (node.text.indexOf('?if') + 1 || node.text.indexOf('?') + 1)) {
+            processIfValues(css, rule, node, queries);
           }
         });
 
@@ -68,10 +79,14 @@ function processIfValues(css, rule, decl, queries) {
   var re2 = /\s/g;
   var hash = null;
 
-  var match = decl.value.match(re);
+  // Check if we're working with comments.
+  var match = decl.value ? decl.value.match(re) : decl.text.match(re);
   
   if(match && match[1] && match[2]) {
-    decl.value = match[1];
+    if(decl.value)
+      decl.value = match[1];
+    else
+      decl.text = match[1];
     hash = match[2].replace(re2, '');
 
     if(!queries[hash]) {
@@ -84,7 +99,7 @@ function processIfValues(css, rule, decl, queries) {
     queries[hash].props.push({name: decl.prop, value: match[1], query: match[2], hash: hash, decl: decl});
   }
   else
-    throw decl.error('Invalid inline query. ' + decl.prop + ': ' + decl.value, { plugin: 'postcss-if-media' });
+    throw decl.error('Invalid inline query. ' + (decl.text || (decl.prop + ': ' + decl.value)), { plugin: 'postcss-if-media' });
 }
 
 // The previously extracted inline queries and their associated properties are used
