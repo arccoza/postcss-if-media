@@ -54,16 +54,31 @@ var tests = {
         "}")
     },
     {
-      "msg": "Throw error on malformed inline query.",
-      "chk": "throws",
-      "in": ".test { position: relative; background: red ?if media; }",
-      "out": postcss.CssSyntaxError
+      "msg": "Make sure question mark ? in query part of a url() is not mistaken for the start of an ?if query.",
+      "chk": "equal",
+      "in": ".test { position: relative; background: url(bg.dev?if=test.png&size=l) ?if media " + query + "; }",
+      "out": "".concat(".test { position: relative; }\n",
+        "@media " + query + " {\n",
+        ".test { background: url(bg.dev?if=test.png&size=l); }\n",
+        "}")
     },
     {
-      "msg": "Throw error on malformed inline query.",
-      "chk": "throws",
+      "msg": "Make sure question mark ? in query part of a url() is not mistaken for the start of an ?if query.",
+      "chk": "equal",
+      "in": ".test { position: relative; background: url(bg.dev?if=test.png&size=l); }",
+      "out": ".test { position: relative; background: url(bg.dev?if=test.png&size=l); }"
+    },
+    {
+      "msg": "Warn on apparent malformed inline query.",
+      "chk": "warns",
+      "in": ".test { position: relative; background: red ?if media; }",
+      "out": undefined
+    },
+    {
+      "msg": "Warn on apparent malformed inline query.",
+      "chk": "warns",
       "in": ".test { position: relative; background: red ?if }",
-      "out": postcss.CssSyntaxError
+      "out": undefined
     }
   ],
   // color: green; is appended to these test because PostCSS keeps stripping the last ';'
@@ -102,16 +117,22 @@ var tests = {
         "}")
     },
     {
-      "msg": "Throw error on malformed inline query.",
-      "chk": "throws",
+      "msg": "Warn on apparent malformed inline query.",
+      "chk": "warns",
       "in": ".test { position: relative; ?if media { background: red; } }",
-      "out": postcss.CssSyntaxError
+      "out": undefined
     },
     {
-      "msg": "Throw error on malformed inline query.",
-      "chk": "throws",
+      "msg": "Warn on apparent malformed inline query.",
+      "chk": "warns",
       "in": ".test { position: relative; ?if { background: red; } }",
-      "out": postcss.CssSyntaxError
+      "out": undefined
+    },
+    {
+      "msg": "Warn on apparent malformed inline query.",
+      "chk": "warns",
+      "in": ".test { position: relative; #an-id ? > .a-class { background: red; } }",
+      "out": undefined
     }
   ]
 }
@@ -126,8 +147,11 @@ test('Inline ?if media queries.', function(t) {
     fix = tests['inline'][i];
     lazy = processor.process(fix.in);
     
+    // console.log(lazy.css, lazy.result.warnings())
     if(fix.chk == 'throws')
       t.throws(function() { css = lazy.css; }, fix.out);
+    else if(fix.chk == 'warns')
+      t.ok((lazy.css, lazy.result.warnings()).length > 0)
     else
       t[fix.chk](ws(lazy.css), ws(fix.out));
   };
@@ -145,6 +169,10 @@ test('Block ?if media queries.', function(t) {
     
     if(fix.chk == 'throws')
       t.throws(function() { css = lazy.css; }, fix.out);
+    else if(fix.chk == 'warns') {
+      console.log((lazy.css, lazy.result.warnings()))
+      t.ok((lazy.css, lazy.result.warnings()).length > 0)
+    }
     else
       t[fix.chk](ws(lazy.css), ws(fix.out));
   };

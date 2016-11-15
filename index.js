@@ -1,7 +1,7 @@
 var postcss = require('postcss');
 
 
-module.exports = postcss.plugin('postcss-layout', function (opts) {
+module.exports = postcss.plugin('postcss-if-media', function (opts) {
   opts = opts || {};
   opts._queries = [];
   
@@ -18,7 +18,7 @@ module.exports = postcss.plugin('postcss-layout', function (opts) {
           // their value and unwrap them from their container rule block, they will then be processed as regular
           // properties of the parent rule with inline queries later. 
           // This process is simpler and easier to maintain.
-          if(node.type == 'rule' && (node.selector.indexOf('?if') == 0 || node.selector.indexOf('?') == 0)) {
+          if(node.type == 'rule' && (node.selector.indexOf('?if media') == 0 || node.selector.indexOf('? media') == 0)) {
             var qblock = node;
             var prev = qblock;
 
@@ -46,18 +46,19 @@ module.exports = postcss.plugin('postcss-layout', function (opts) {
             // Remove the query block when we're done so that it is not processed again later by walkRules.
             qblock.remove();
           }
+          else if(node.type == 'rule' && (node.selector.indexOf('?') + 1)) {
+            node.warn(result, 'Appears to be a malformed `?if media` query -> ' + node.selector)
+          }
 
           // Here the properties with an inline query are identified and sent off for processing.
-          if(node.type == 'decl' && (node.value.indexOf('?if') + 1 || node.value.indexOf('?') + 1)) {
-            processIfValues(css, rule, node, queries);
-          } 
-          else if(node.type == 'decl') {
-            // console.log('no decl match', node.prop, node.value);
-          }
           // We process and move comments only because some plugins rely on them.
-          else if(node.type == 'comment' && (node.text.indexOf('?if') + 1 || node.text.indexOf('?') + 1)) {
-            processIfValues(css, rule, node, queries);
+          if((node.type == 'decl' || node.type == 'comment') && ((node.value || node.text).indexOf(' ?if media ') + 1 || (node.value || node.text).indexOf(' ? media ') + 1)) {
+            processIfValues(css, result, rule, node, queries);
           }
+          else if((node.type == 'decl' || node.type == 'comment') && ((node.value || node.text).indexOf('?if') + 1 || (node.value || node.text).indexOf('? media') + 1)) {
+            node.warn(result, 'Appears to be a malformed `?if media` query -> ' + node)
+          }
+
         });
 
         // Take the gathered queries and associated properties and send them to be made into @media rules.
@@ -73,7 +74,7 @@ module.exports = postcss.plugin('postcss-layout', function (opts) {
 
 // Extract the values and add them to the list of queries.
 // Props are grouped by their queries, so that they appear in the same @media block later.
-function processIfValues(css, rule, decl, queries) {
+function processIfValues(css, result, rule, decl, queries) {
   var query = null;
   var re = /(.*)\s+(?:\?if|\?)\s+media\s+(.*)/;
   var re2 = /\s/g;
@@ -81,7 +82,7 @@ function processIfValues(css, rule, decl, queries) {
 
   // Check if we're working with comments.
   var match = decl.value ? decl.value.match(re) : decl.text.match(re);
-  
+  // console.log(match)
   if(match && match[1] && match[2]) {
     if(decl.value)
       decl.value = match[1];
@@ -99,7 +100,7 @@ function processIfValues(css, rule, decl, queries) {
     queries[hash].props.push({name: decl.prop, value: match[1], query: match[2], hash: hash, decl: decl});
   }
   else
-    throw decl.error('Invalid inline query. ' + (decl.text || (decl.prop + ': ' + decl.value)), { plugin: 'postcss-if-media' });
+    decl.warn(result, 'Appears to be a malformed `?if media` query -> ' + decl);
 }
 
 // The previously extracted inline queries and their associated properties are used
