@@ -6,7 +6,7 @@
 
 A PostCSS plugin for adding `?if media` queries inside rules and inline with property values.
 A great way to keep style values for different media queries neatly organized and grouped together under their natural rules.
-Use with [PostCSS Media Minmax][postcss-media-minmax] and [PostCSS Custom Media][postcss-custom-media] for best effect.
+Use with [PostCSS Media Minmax][postcss-media-minmax] and [PostCSS Custom Media][postcss-custom-media] for best effect (be sure to place postcss-if-media before postcss-media-minmax, and postcss-custom-media, or any other media query plugins).
 
 ## Explanation
 The plugin provides `?if media QUERY` as an inline declaration and a nested block, where `QUERY` is any valid media query.
