@@ -21,7 +21,23 @@ var query = 'tv and (min-width: 700px) and (orientation: landscape)';
 var query2 = '(min-width: 700px) and (orientation: landscape)';
 
 var tests = {
-  "inline": [ 
+  "inline": [
+    {
+      "msg": "PostCSS 6 Support #5",
+      "chk": "equal",
+      "in": `.test {
+                margin: 0 1rem;
+                margin: 0 3rem ?if media (min-width: 900px);
+              }`,
+      "out": `.test {
+                margin: 0 1rem;
+              }
+              @media (min-width: 900px) {
+                .test {
+                   margin: 0 3rem;
+                }
+              }`
+    },
     {
       "msg": "Move a property with an inline ?if media query into its own rule under an @media query.",
       "chk": "equal",
@@ -84,7 +100,7 @@ var tests = {
   // color: green; is appended to these test because PostCSS keeps stripping the last ';'
   // from the result because of the nested block (which doesn't have a closing ';').
   //  Related: https://github.com/postcss/postcss-nested/issues/9
-  "block": [ 
+  "block": [
     {
       "msg": "Move a property in a block ?if media query into its own rule under an @media query.",
       "chk": "equal",
@@ -146,8 +162,8 @@ test('Inline ?if media queries.', function(t) {
   for (var i = 0; i < tests['inline'].length; i++) {
     fix = tests['inline'][i];
     lazy = processor.process(fix.in);
-    
-    // console.log(lazy.css, lazy.result.warnings())
+
+    // console.log('\n---\n', lazy.css, lazy.result.warnings(), '\n---\n')
     if(fix.chk == 'throws')
       t.throws(function() { css = lazy.css; }, fix.out);
     else if(fix.chk == 'warns')
@@ -166,11 +182,11 @@ test('Block ?if media queries.', function(t) {
   for (var i = 0; i < tests['block'].length; i++) {
     fix = tests['block'][i];
     lazy = processor.process(fix.in);
-    
+
     if(fix.chk == 'throws')
       t.throws(function() { css = lazy.css; }, fix.out);
     else if(fix.chk == 'warns') {
-      console.log((lazy.css, lazy.result.warnings()))
+      // console.log((lazy.css, lazy.result.warnings()))
       t.ok((lazy.css, lazy.result.warnings()).length > 0)
     }
     else
