@@ -31,7 +31,7 @@ module.exports = postcss.plugin('postcss-if-media', function (opts) {
                 // We keep track of the previous insert/move so that the next insert/move is after the 'prev',
                 // maintaining the original order of the properties and hence CSS specificity.
                 // The first value of 'prev' is obviously the query block.
-                node.moveAfter(prev);
+                rule.insertAfter(prev, node.remove());
                 prev = node;
                 // console.log(node);
               }
