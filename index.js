@@ -115,15 +115,16 @@ function createAtRules(css, rule, queries) {
     var qr = postcss.rule ({selector: q.sel, source: rule.source});
 
     at.append(qr);
-    // Again we keep track of the previous insert and insert after it, to maintain the original order
-    // and CSS specificity.
-    parent.insertAfter(prev, at);
-    prev = at;
 
     for (var i = 0; i < q.props.length; i++) {
       var prop = q.props[i];
       qr.append(prop.decl.remove());
     };
+
+    // Again we keep track of the previous insert and insert after it, to maintain the original order
+    // and CSS specificity.
+    parent.insertAfter(prev, at);
+    prev = at;
   }
 
 }
