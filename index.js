@@ -4,7 +4,7 @@ var postcss = require('postcss');
 module.exports = postcss.plugin('postcss-if-media', function (opts) {
   opts = opts || {};
   opts._queries = [];
-  
+
   return function (css, result) {
     css
       .walkRules(function(rule) {
@@ -16,7 +16,7 @@ module.exports = postcss.plugin('postcss-if-media', function (opts) {
           // which contains a group of properties for that inline query(selector).
           // We don't process the properties in these query blocks directly, we simply add the query(selector) onto
           // their value and unwrap them from their container rule block, they will then be processed as regular
-          // properties of the parent rule with inline queries later. 
+          // properties of the parent rule with inline queries later.
           // This process is simpler and easier to maintain.
           if(node.type == 'rule' && (node.selector.indexOf('?if media') == 0 || node.selector.indexOf('? media') == 0)) {
             var qblock = node;
@@ -113,16 +113,16 @@ function createAtRules(css, rule, queries) {
     var q = queries[k];
     var at = postcss.atRule({name: 'media', params: q.arg, source: rule.source});
     var qr = postcss.rule ({selector: q.sel, source: rule.source});
-    
+
     at.append(qr);
     // Again we keep track of the previous insert and insert after it, to maintain the original order
     // and CSS specificity.
     parent.insertAfter(prev, at);
     prev = at;
-    
+
     for (var i = 0; i < q.props.length; i++) {
       var prop = q.props[i];
-      prop.decl.moveTo(qr);
+      qr.append(prop.decl.remove());
     };
   }
 
