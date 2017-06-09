@@ -1,3 +1,12 @@
+## [1.0.3] - 2017-06-09
+### Fixed
+- Issue #5, empty rules in webpack under PostCSS 6.
+
+### Changed
+- Replaced PostCSS 6 deprecated methods for v5 & v6 compatible alternatives.
+- Switched to Yarn from NPM.
+- Updated PostCSS dependency to include wide range of supported versions.
+
 ## [1.0.2] - 2016-11-15
 ### Fixed
 - Registered plugin name is now correct.
